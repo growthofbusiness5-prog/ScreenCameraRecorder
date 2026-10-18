@@ -1,11 +1,9 @@
-
 name: Build Screen Camera Recorder APK
 
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
+    branches: [main]
 
 permissions:
   contents: read
@@ -15,8 +13,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source
+      - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Show project files
+        run: |
+          pwd
+          ls -la
+          find . -maxdepth 4 \( -name settings.gradle -o -name settings.gradle.kts \)
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -28,12 +32,18 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build APK
-        working-directory: ScreenCameraRecorder
-        run: gradle assembleDebug
+        run: |
+          if [ -f ScreenCameraRecorder/settings.gradle.kts ] || [ -f ScreenCameraRecorder/settings.gradle ]; then
+            cd ScreenCameraRecorder
+          fi
+          gradle assembleDebug
 
       - name: Upload APK
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: ScreenCameraRecorder-debug
-          path: ScreenCameraRecorder/app/build/outputs/apk/debug/*.apk
+          path: |
+            app/build/outputs/apk/debug/*.apk
+            ScreenCameraRecorder/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
